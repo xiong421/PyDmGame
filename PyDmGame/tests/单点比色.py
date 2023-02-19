@@ -8,9 +8,9 @@
 @func:功能
 """
 
-from PyDmGame import *
+import PyDmGame
 
-dm = DM()
-dm.BindWindow(68150,"windows","windows","windows",0)
+dm = PyDmGame.DM()
+dm.BindWindow(68150,"gdi","windows","windows",0)
 result = dm.CmpColor(199,175, "f4c51f", 0.9)
 print(result)

@@ -27,7 +27,7 @@ def normal_keyboard(hwnd):
 
 def windows_keyboard(hwnd):
     dm = DM()
-    dm.BindWindow(hwnd, "windows", "windows", "windows", 0)
+    dm.BindWindow(hwnd, "normal", "windows", "windows", 0)
     s = time.time()
     dm.KeyPressStr("1", 50)
     # dm.KeyPressChar("a")
@@ -36,7 +36,7 @@ def windows_keyboard(hwnd):
 
 def sendstring_keyboard(hwnd):
     dm = DM()
-    dm.BindWindow(hwnd, "windows", "windows", "windows", 0)
+    dm.BindWindow(hwnd, "gdi", "windows", "windows", 0)
     dm.SendString(hwnd, "我是大雄")
 
 

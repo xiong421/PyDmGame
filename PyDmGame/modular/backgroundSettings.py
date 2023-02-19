@@ -18,8 +18,8 @@ class BackgroundSettings:
         if display == "normal":
             td_info[self.id].display = Display_normal(hwnd)
 
-        elif display == "windows":
-            td_info[self.id].display = Display_windows(hwnd)
+        elif display == "gdi":
+            td_info[self.id].display = Display_GDI(hwnd)
 
         else:
             raise "display绑定模式有误"

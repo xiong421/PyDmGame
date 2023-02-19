@@ -7,18 +7,14 @@
 @Email:3475228828@qq.com
 @func:功能
 """
-import io
 import os
 
-import cv2
-import numpy as np
-import requests
 
 
 class Ocr:
-    # 设置服务器地址
-    def SetServerUrl(self,url):
-        self.ocr_server_url = url
+    # # 设置服务器地址
+    # def SetServerUrl(self,url):
+    #     self.ocr_server_url = url
 
     # 查找数字是否存在
     def FindNum(self, x1, y1, x2, y2, numString, color_format, sim):
@@ -66,44 +62,47 @@ class Ocr:
         except:
             return ""
 
-    # 服务器ocr
-    def OcrServer(self, x1, y1, x2, y2, color_format, sim):
-        """
-        :param x1: 整形数:区域的左上X坐标
-        :param y1: 整形数:区域的左上Y坐标
-        :param x2: 整形数:区域的右下X坐标
-        :param y2: 整形数:区域的右下Y坐标
-        :param color_format: 偏色,可以是RGB偏色,格式"FFFFFF-202020",也可以是HSV偏色，格式((0,0,0),(180,255,255))
-        :param sim: 相似度
-        :return: 列表,包含坐标和文字
-        """
-        if not None in [x1, y1, x2, y2]:
-            img = self.img[y1:y2, x1:x2]
-        img = self.__ps_to_img(img, color_format)
-        img_bt = np.array(cv2.imencode('.png', img)[1]).tobytes()
-        file = io.BytesIO(img_bt)
-        data = {
-            'username': 270207756,
-            'pwd': 123456,
-            'lang': "ch",  # ch中文,eh英文
-            "det": True,  # 是指是否要检测文本的位置,False为识别单行，Ture为识别多行，只有多行才有坐标返回
-            "ret": True,  # 是指是否要识别文本的内容
-        }
-        response = requests.post(self.ocr_server_url, files=[('img', ("", file))], data=data)
-        if response.status_code == 200:
-            result = response.json()
-            msg_code = result["msg_code"]
-            if msg_code == 200:
-                content = result["content"]
-                result = [item for item in content[0] if item[1][1] > sim]
-                new_result = []
-                for item in result:
-                    item[0] = [[loc[0] + x1, loc[1] + y1] for loc in item[0]]
-                    new_result.append(item)
-                return new_result
-            else:
-                print(f"识别异常 {response.json()}")
-
-        else:
-            print(f"服务器异常 {response.status_code}")
-            return False
+    # # 服务器ocr
+    # def OcrServer(self, x1, y1, x2, y2, color_format, sim):
+    #     """
+    #     :param x1: 整形数:区域的左上X坐标
+    #     :param y1: 整形数:区域的左上Y坐标
+    #     :param x2: 整形数:区域的右下X坐标
+    #     :param y2: 整形数:区域的右下Y坐标
+    #     :param color_format: 偏色,可以是RGB偏色,格式"FFFFFF-202020",也可以是HSV偏色，格式((0,0,0),(180,255,255))
+    #     :param sim: 相似度
+    #     :return: 列表,包含坐标和文字
+    #     """
+    #     if not None in [x1, y1, x2, y2]:
+    #         img = self.img[y1:y2, x1:x2]
+    #     img = self.__ps_to_img(img, color_format)
+    #     img_bt = np.array(cv2.imencode('.png', img)[1]).tobytes()
+    #     data = {
+    #         'username': 270207756,
+    #         'pwd': 123456,
+    #         'lang': "ch",  # ch中文,eh英文
+    #         "det": True,  # 是指是否要检测文本的位置,False为识别单行，Ture为识别多行，只有多行才有坐标返回
+    #         "ret": True,  # 是指是否要识别文本的内容
+    #         "file":io.BytesIO(img_bt)
+    #     }
+    #     data = urllib.parse.urlencode(data).encode('utf8')
+    #     request = urllib.request.Request(self.ocr_server_url, data=data,method="post")
+    #     response  = urllib.request.urlopen(request)
+    #     # response = requests.post(self.ocr_server_url, files=[('img', ("", file))], data=data)
+    #     if response.status_code == 200:
+    #         result = response.json()
+    #         msg_code = result["msg_code"]
+    #         if msg_code == 200:
+    #             content = result["content"]
+    #             result = [item for item in content[0] if item[1][1] > sim]
+    #             new_result = []
+    #             for item in result:
+    #                 item[0] = [[loc[0] + x1, loc[1] + y1] for loc in item[0]]
+    #                 new_result.append(item)
+    #             return new_result
+    #         else:
+    #             print(f"识别异常 {response.json()}")
+    #
+    #     else:
+    #         print(f"服务器异常 {response.status_code}")
+    #         return False

@@ -12,7 +12,7 @@ import win32ui
 import win32con
 import cv2,numpy as np
 
-class Display_windows:
+class Display_GDI:
     def __init__(self,hwnd):
         self.hwnd = hwnd
         self.img = None

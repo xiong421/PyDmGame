@@ -25,7 +25,7 @@ def mouse_normal():
 
 def mouse_windows(hwnd):
     dm = DM()
-    dm.BindWindow(hwnd,"windows","windows","windows")
+    dm.BindWindow(hwnd,"gdi","windows","windows")
     dm.MoveTo(89,188)
     dm.LeftClick()
     time.sleep(1)

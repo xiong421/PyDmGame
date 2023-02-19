@@ -8,4 +8,4 @@
 @func:功能
 """
 from PyDmGame.modular.display_.normal import Display_normal
-from PyDmGame.modular.display_.windows import Display_windows
+from PyDmGame.modular.display_.gdi import Display_GDI

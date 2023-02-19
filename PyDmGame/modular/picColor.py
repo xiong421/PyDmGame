@@ -202,7 +202,7 @@ class PicColor:
         :param y1: y1 整形数:区域的左上Y坐标
         :param x2: x2 整形数:区域的右下X坐标
         :param y2: y2 整形数:区域的右下Y坐标
-        :param file: 保存文件路径，不填写则写入cv图像到属性img
+        :param file: 保存文件路径，不填写也可以通过
         :return:
         """
         pass

@@ -25,8 +25,6 @@ setuptools.setup(
     author_email="270207756@foxmail.com",
     install_requires=[
         "opencv-python>=4.3.0.38",
-        # "flask>=2.2.2",
-        "requests>=2.28.2",
         "pywin32>=305",
     ],
     packages=['PyDmGame', "PyDmGame/modular", "PyDmGame/model", "PyDmGame/tests", "PyDmGame/model",
