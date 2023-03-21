@@ -10,5 +10,5 @@
 
 class BasicSettings:
     # 设置路径
-    def SetPath(self, path):
+    def set_find_image_path(self, path):
         self.path = path

@@ -12,10 +12,10 @@ import win32ui
 import win32con
 import cv2,numpy as np
 
-class Display_GDI:
-    def __init__(self,hwnd):
-        self.hwnd = hwnd
-        self.img = None
+from PyDmGame.modular import cutOut
+
+
+class Display_gdi:
     # 后台截图
     @staticmethod
     def windows_capture(hwnd):
@@ -45,33 +45,24 @@ class Display_GDI:
         return img
 
     # 截图
-    def Capture(self, x1, y1, x2, y2, file=None):
+    def capture(self, x1=None, y1=None, x2=None, y2=None, file=None):
         """
         :param x1: x1 整形数:区域的左上X坐标
         :param y1: y1 整形数:区域的左上Y坐标
         :param x2: x2 整形数:区域的右下X坐标
         :param y2: y2 整形数:区域的右下Y坐标
-        :param file: 保存文件路径，不填写则写入cv图像到属性self.img
+        :param file: 保存文件路径，不填写则写入cv图像到属性self._img
         :return:
         """
         # 截取并写入
-        self.img = self.windows_capture(self.hwnd)
-        self.img = self.cutOut(x1, y1, x2, y2)
-        if not self.img is None:
+        self._img = self.windows_capture(self.hwnd)
+        self._img = cutOut(self._img,x1, y1, x2, y2)
+        if not self._img is None:
             if file:
-                cv2.imwrite(file, self.img)
+                cv2.imwrite(file, self._img)
             return 1
         return 0
 
-    # 截取图像范围
-    def cutOut(self, x1, y1, x2, y2):
-        if sum([x1, y1, x2, y2]) == 0:
-            return self.img
-        height, width = self.img.shape[:2]
-        if y1 <= y2 <= height and x1 <= x2 <= width:
-            return self.img[y1:y2, x1:x2]
-        else:
-            raise "x1,y1,x2,y2图像范围溢出"
 
-    def GetCVImg(self):
-        return self.img
+    def getCVImg(self):
+        return self._img

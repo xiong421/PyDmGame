@@ -1,0 +1,6 @@
+recursive-include PyDmGame/modular/dll/32 *.dll
+recursive-include PyDmGame/modular/dll/64 *.dll
+recursive-include PyDmGame/modular/ocr_/PaddleOCR-json.v1.2.1 *.*
+recursive-include PyDmGame/modular/ocr_/PaddleOCR-json.v1.2.1/ch_PP-OCRv3_det_infer *.*
+recursive-include PyDmGame/modular/ocr_/PaddleOCR-json.v1.2.1/ch_PP-OCRv3_rec_infer *.*
+recursive-include PyDmGame/modular/ocr_/PaddleOCR-json.v1.2.1/ch_ppocr_mobile_v2.0_cls_infer *.*

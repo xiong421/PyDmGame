@@ -19,7 +19,7 @@ class Window():
     winwinmm = ctypes.windll.LoadLibrary('winmm.dll')
 
     @staticmethod
-    def ClientToScreen(hwnd, x, y) -> tuple:
+    def clientToScreen(hwnd, x, y) -> tuple:
         point = ctypes.wintypes.POINT()
         point.x = x
         point.y = y
@@ -29,7 +29,7 @@ class Window():
         return (point.x, point.y)
 
     @staticmethod
-    def EnumProcess(name) -> str:
+    def enumProcess(name) -> str:
         '''需安装psutil'''
         try:
             import psutil
@@ -50,19 +50,19 @@ class Window():
         return ','.join(ret)
 
     @staticmethod
-    def FindWindow(class_, title) -> int:
-        return Window.FindWindowEx(None, class_, title)
+    def findWindow(class_, title) -> int:
+        return Window.findWindowEx(None, class_, title)
 
     @staticmethod
-    def FindWindowEx(parent, class_, title) -> int:
+    def findWindowEx(parent, class_, title) -> int:
         retArr = []
 
         def mycallback(hwnd, extra) -> bool:
             if not Window.winuser32.IsWindowVisible(hwnd):
                 return True
-            if class_.upper() not in Window.GetWindowClass(hwnd).upper():
+            if class_.upper() not in Window.getWindowClass(hwnd).upper():
                 return True
-            if title.upper() not in Window.GetWindowTitle(hwnd).upper():
+            if title.upper() not in Window.getWindowTitle(hwnd).upper():
                 return True
             retArr.append(hwnd)
             return False
@@ -74,7 +74,7 @@ class Window():
         return retArr[0]
 
     @staticmethod
-    def FindWindowByProcessId(process_id, class_, title) -> int:
+    def findWindowByProcessId(process_id, class_, title) -> int:
         retArr = []
 
         def mycallback(hwnd, extra) -> bool:
@@ -84,9 +84,9 @@ class Window():
             Window.winuser32.GetWindowThreadProcessId(hwnd, ctypes.byref(lProcessId))
             if process_id != lProcessId.value:
                 return True
-            if class_.upper() not in Window.GetWindowClass(hwnd).upper():
+            if class_.upper() not in Window.getWindowClass(hwnd).upper():
                 return True
-            if title.upper() not in Window.GetWindowTitle(hwnd).upper():
+            if title.upper() not in Window.getWindowTitle(hwnd).upper():
                 return True
             retArr.append(hwnd)
             return False
@@ -98,7 +98,7 @@ class Window():
         return retArr[0]
 
     @staticmethod
-    def FindWindowByProcess(process_name, class_, title) -> int:
+    def findWindowByProcess(process_name, class_, title) -> int:
         '''需安装psutil'''
         try:
             import psutil
@@ -109,7 +109,7 @@ class Window():
         def mycallback(hwnd, extra) -> bool:
             if not Window.winuser32.IsWindowVisible(hwnd):
                 return True
-            lProcessId = Window.GetWindowProcessId(hwnd)
+            lProcessId = Window.getWindowProcessId(hwnd)
             lProcessName = None
             try:  # 有些进程是无法打开的
                 lProcessName = psutil.Process(lProcessId).name()
@@ -118,9 +118,9 @@ class Window():
             if (lProcessName == None): lProcessName = ""
             if process_name.upper() not in lProcessName.upper():
                 return True
-            if class_.upper() not in Window.GetWindowClass(hwnd).upper():
+            if class_.upper() not in Window.getWindowClass(hwnd).upper():
                 return True
-            if title.upper() not in Window.GetWindowTitle(hwnd).upper():
+            if title.upper() not in Window.getWindowTitle(hwnd).upper():
                 return True
             retArr.append(hwnd)
             return False
@@ -132,7 +132,7 @@ class Window():
         return retArr[0]
 
     @staticmethod
-    def GetProcessInfo(pid):
+    def getProcessInfo(pid):
         '''需安装psutil'''
         try:
             import psutil
@@ -142,7 +142,7 @@ class Window():
         return p.name() + '|' + p.exe() + '|' + str(p.cpu_percent()) + '|' + str(p.memory_info().rss)
 
     @staticmethod
-    def GetWindowClass(hwnd) -> str:
+    def getWindowClass(hwnd) -> str:
         classStr = ctypes.create_string_buffer(''.encode(), 1000)
         is_ok: bool = Window.winuser32.GetClassNameA(hwnd, classStr, 1000)
         if (not is_ok) and Window.winKernel32.GetLastError() != 0:
@@ -150,7 +150,7 @@ class Window():
         return ctypes.string_at(classStr).decode('GB2312')
 
     @staticmethod
-    def GetWindowProcessId(hwnd) -> int:
+    def getWindowProcessId(hwnd) -> int:
         lProcessId = ctypes.wintypes.LONG()
         is_ok: bool = Window.winuser32.GetWindowThreadProcessId(hwnd, ctypes.byref(lProcessId))
         if (not is_ok) and Window.winKernel32.GetLastError() != 0:
@@ -158,7 +158,7 @@ class Window():
         return lProcessId.value
 
     @staticmethod
-    def GetWindowTitle(hwnd) -> str:
+    def getWindowTitle(hwnd) -> str:
         titleStr = ctypes.create_string_buffer(''.encode(), 1000)
         is_ok: bool = Window.winuser32.GetWindowTextA(hwnd, titleStr, 1000)
         if (not is_ok) and Window.winKernel32.GetLastError() != 0:
@@ -166,18 +166,18 @@ class Window():
         return ctypes.string_at(titleStr).decode('GB2312')
 
     @staticmethod
-    def GetWindowProcessPath(hwnd) -> str:
+    def getWindowProcessPath(hwnd) -> str:
         '''需安装psutil'''
         try:
             import psutil
         except:
             raise Exception("called GetWindowProcessPath failed:psutil not install")
-        process_id = Window.GetWindowProcessId(hwnd)
+        process_id = Window.getWindowProcessId(hwnd)
         p = psutil.Process(process_id)
         return p.exe()
 
     @staticmethod
-    def GetSpecialWindow(flag) -> int:
+    def getSpecialWindow(flag) -> int:
         if flag == 0:
             return Window.winuser32.GetDesktopWindow()
         elif flag == 1:
@@ -186,15 +186,15 @@ class Window():
             raise Exception('call GetSpecialWindow Failed')
 
     @staticmethod
-    def GetForegroundWindow() -> int:
+    def getForegroundWindow() -> int:
         is_ok: int = Window.winuser32.GetForegroundWindow()
         if not is_ok:
             raise Exception('call GetForegroundWindow Failed')
         return is_ok
 
     @staticmethod
-    def GetForegroundFocus() -> int:
-        wnd: int = Window.GetForegroundWindow()
+    def getForegroundFocus() -> int:
+        wnd: int = Window.getForegroundWindow()
         if not wnd:
             raise Exception('call GetForegroundFocus Failed')
         SelfThreadId = Window.winKernel32.GetCurrentThreadId()
@@ -207,7 +207,7 @@ class Window():
         return wnd
 
     @staticmethod
-    def GetMousePointWindow() -> int:
+    def getMousePointWindow() -> int:
         class POINT(ctypes.Structure):
             _fields_ = [
                 ("x", ctypes.wintypes.LONG),
@@ -222,7 +222,7 @@ class Window():
         return hwnd
 
     @staticmethod
-    def GetPointWindow(x, y) -> int:
+    def getPointWindow(x, y) -> int:
         class POINT(ctypes.Structure):
             _fields_ = [
                 ("x", ctypes.wintypes.LONG),
@@ -238,7 +238,7 @@ class Window():
         return hwnd
 
     @staticmethod
-    def GetWindow(hwnd, flag) -> int:
+    def getWindow(hwnd, flag) -> int:
         rethwnd = None
         if flag == 0:
             rethwnd = Window.winuser32.GetParent(hwnd)
@@ -278,7 +278,7 @@ class Window():
         return rethwnd
 
     @staticmethod
-    def GetWindowRect(hwnd) -> tuple:
+    def getWindowRect(hwnd) -> tuple:
         rect = ctypes.wintypes.RECT()
         is_ok: bool = Window.winuser32.GetWindowRect(hwnd, ctypes.byref(rect))
         if not is_ok:
@@ -286,11 +286,11 @@ class Window():
         return (rect.left, rect.top, rect.right, rect.bottom)
 
     @staticmethod
-    def GetWindowState(hwnd, flag) -> bool:
+    def getWindowState(hwnd, flag) -> bool:
         if flag == 0:
             return Window.winuser32.IsWindow(hwnd) == 1
         elif flag == 1:
-            return Window.GetForegroundWindow() == hwnd
+            return Window.getForegroundWindow() == hwnd
         elif flag == 2:
             return Window.winuser32.IsWindowVisible(hwnd) == 1
         elif flag == 3:
@@ -336,7 +336,7 @@ class Window():
             if not Is64Bit():
                 return False
             isWow64Process = ctypes.wintypes.BOOL(True)
-            processId = Window.GetWindowProcessId(hwnd)
+            processId = Window.getWindowProcessId(hwnd)
             PROCESS_QUERY_INFORMATION = 0x0400
             hProcess = Window.winKernel32.OpenProcess(PROCESS_QUERY_INFORMATION, False, processId)
             if not hProcess:
@@ -350,7 +350,7 @@ class Window():
             return True
 
     @staticmethod
-    def GetClientSize(hwnd) -> tuple:
+    def getClientSize(hwnd) -> tuple:
         rect = ctypes.wintypes.RECT()
         is_ok: bool = Window.winuser32.GetClientRect(hwnd, ctypes.byref(rect))
         if not is_ok:
@@ -358,7 +358,7 @@ class Window():
         return (rect.right, rect.bottom)
 
     @staticmethod
-    def ScreenToClient(hwnd, x, y) -> tuple:
+    def screenToClient(hwnd, x, y) -> tuple:
         point = ctypes.wintypes.POINT()
         point.x = x
         point.y = y
@@ -368,46 +368,46 @@ class Window():
         return (point.x, point.y)
 
     @staticmethod
-    def GetClientRect(hwnd) -> tuple:
-        x1, y1 = Window.ClientToScreen(hwnd, 0, 0)
-        x2, y2 = Window.GetClientSize(hwnd)
-        x2, y2 = Window.ClientToScreen(hwnd, x2, y2)
+    def getClientRect(hwnd) -> tuple:
+        x1, y1 = Window.clientToScreen(hwnd, 0, 0)
+        x2, y2 = Window.getClientSize(hwnd)
+        x2, y2 = Window.clientToScreen(hwnd, x2, y2)
         return (x1, y1, x2, y2)
 
     @staticmethod
-    def MoveWindow(hwnd, x, y) -> None:
-        x1, y1, x2, y2 = Window.GetWindowRect(hwnd)
+    def moveWindow(hwnd, x, y) -> None:
+        x1, y1, x2, y2 = Window.getWindowRect(hwnd)
         is_ok: bool = Window.winuser32.MoveWindow(hwnd, 0, 0, x2 - x1, y2 - y1, True)
         if not is_ok:
             raise Exception('call MoveWindow failed')
 
     @staticmethod
-    def SetWindowSize(hwnd, width, height) -> None:
-        x1, y1, x2, y2 = Window.GetWindowRect(hwnd)
+    def setWindowSize(hwnd, width, height) -> None:
+        x1, y1, x2, y2 = Window.getWindowRect(hwnd)
         is_ok: bool = Window.winuser32.MoveWindow(hwnd, x1, y1, width, height, True)
         if not is_ok:
             raise Exception('call SetWindowSize failed')
 
     @staticmethod
-    def SetWindowText(hwnd, title):
+    def setWindowText(hwnd, title):
         is_ok: bool = Window.winuser32.SetWindowTextW(hwnd, title)
         if not is_ok:
             raise Exception('call SetWindowText failed')
 
     @staticmethod
-    def SetWindowTransparent(hwnd, trans):
+    def setWindowTransparent(hwnd, trans):
         is_ok: bool = Window.winuser32.SetLayeredWindowAttributes(hwnd, 0, trans, 2)
         if not is_ok:
             raise Exception('call SetWindowTransparent failed')
 
     @staticmethod
-    def SetClientSize(hwnd, width, height) -> None:
-        wx1, wy1, wx2, wy2 = Window.GetWindowRect(hwnd)
-        w, h = Window.GetClientSize(hwnd)
-        Window.SetWindowSize(hwnd, wx2 - wx1 + width - w, wy2 - wy1 + height - h)
+    def setClientSize(hwnd, width, height) -> None:
+        wx1, wy1, wx2, wy2 = Window.getWindowRect(hwnd)
+        w, h = Window.getClientSize(hwnd)
+        Window.setWindowSize(hwnd, wx2 - wx1 + width - w, wy2 - wy1 + height - h)
 
     @staticmethod
-    def SendPaste(hwnd) -> None:
+    def sendPaste(hwnd) -> None:
         class WINDOWPLACEMENT(ctypes.Structure):
             _fields_ = [
                 ("length", ctypes.wintypes.UINT),
@@ -418,7 +418,7 @@ class Window():
                 ("rcNormalPosition", ctypes.wintypes.RECT)
             ]
 
-        if not Window.GetWindowState(hwnd, 0):
+        if not Window.getWindowState(hwnd, 0):
             raise Exception('call SendPaste failed:window not exist')
         wtp = WINDOWPLACEMENT()
         Window.winuser32.GetWindowPlacement(hwnd, ctypes.byref(wtp))
@@ -435,7 +435,7 @@ class Window():
         Window.winuser32.keybd_event(0x11, 0, 0x0001 | 0x0002, 0)
 
     @staticmethod
-    def SetWindowState(hwnd, flag):
+    def setWindowState(hwnd, flag):
         class WINDOWPLACEMENT(ctypes.Structure):
             _fields_ = [
                 ("length", ctypes.wintypes.UINT),
@@ -478,7 +478,7 @@ class Window():
         elif flag in [10, 11, 12]:
             pass
         elif flag == 13:
-            pid = Window.GetWindowProcessId(hwnd)
+            pid = Window.getWindowProcessId(hwnd)
             hProcessHandle = Window.winKernel32.OpenProcess(1, False, pid)
             is_ok = Window.winKernel32.TerminateProcess(hProcessHandle, 4)
             Window.winKernel32.CloseHandle(hProcessHandle)
@@ -495,17 +495,17 @@ class Window():
             raise Exception('窗口设置失败,请检查句柄或者参数')
 
     @staticmethod
-    def EnumWindow(parent_, title, class_name, filter):
+    def enumWindow(parent_, title, class_name, filter):
         if not parent_:
-            parent_ = Window.GetSpecialWindow(0)
+            parent_ = Window.getSpecialWindow(0)
         martchVec = []
 
         def mycallback(hwnd, extra) -> bool:
             wtitle = None
             wclass = None
             try:
-                wtitle = Window.GetWindowTitle(hwnd)
-                wclass = Window.GetWindowClass(hwnd)
+                wtitle = Window.getWindowTitle(hwnd)
+                wclass = Window.getWindowClass(hwnd)
             except:
                 return True
             if filter & 1 == 1:
@@ -516,7 +516,7 @@ class Window():
                     return True
             if ((filter & 4) >> 2) == 1:
                 try:
-                    if Window.GetWindow(hwnd, 0) != parent_:
+                    if Window.getWindow(hwnd, 0) != parent_:
                         return True
                 except:
                     return True
@@ -526,7 +526,7 @@ class Window():
                 if Window.winKernel32.GetLastError() != 0:
                     return True
             if ((filter & 16) >> 4) == 1:
-                if Window.GetWindowState(2) == False:
+                if Window.getWindowState(2, ) == False:
                     return True
             martchVec.append(hwnd)
             return True

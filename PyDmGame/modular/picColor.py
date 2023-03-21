@@ -10,96 +10,57 @@
 import os
 from PyDmGame.modular.publicFunction import *
 from functools import reduce
-import cv2,numpy as np
+import cv2, numpy as np
+
 
 class PicColor:
-
     # 随机创建图片,用于测试算法
-    def create_random_img(self, width, height, item=3):
+    def _create_random_img(self, width, height, item=3):
         img = np.random.randint(0, 255, (width, height, item))
         img = img.astype(np.uint8)
         return img
 
-    # 转换大漠格式RGB "ffffff-303030" 为 BGR遮罩范围(100,100,100),(255,255,255)
-    def __color_to_range(self, color, sim):
-        if sim <= 1:
-            if len(color) == 6:
-                c = color
-                weight = "000000"
-            elif "-" in color:
-                c, weight = color.split("-")
-            else:
-                raise "参数错误"
-        else:
-            raise "参数错误"
-        color = int(c[4:], 16), int(c[2:4], 16), int(c[:2], 16)
-        weight = int(weight[4:], 16), int(weight[2:4], 16), int(weight[:2], 16)
-        sim = int((1 - sim) * 255)
-        lower = tuple(map(lambda c, w: max(0, c - w - sim), color, weight))
-        upper = tuple(map(lambda c, w: min(c + w + sim, 255), color, weight))
-        return lower, upper
+    def ps_to_img(self,img1, delta_color):
+        return ps_to_img(img1, delta_color)
 
-    def __imread(self, path):
-        # 读取图片
-        if is_chinese(path):
-            img = cv2.imdecode(np.fromfile(path, dtype=np.uint8), -1)  # 避免路径有中文
-        else:
-            img = cv2.imread(path)
-        return img
-
-    def __inRange(self, img, lower, upper):
-        mask = cv2.inRange(img, np.array(lower), np.array(upper))
-        img = cv2.bitwise_and(img, img, mask=mask)
-        return img
-
-    def __imgshow(self, img):
-        windows_name = "img"
-        cv2.imshow(windows_name, img)
-        cv2.waitKey()
-        cv2.destroyWindow(windows_name)
-
-    def __ps_to_img(self, img, ps):
-        """
-        :param img: cv图像
-        :param ps: 偏色
-        :return: 偏色后的cv图像
-        """
+    def _find_pic(self, img1, pic_name, delta_color, sim, method,gray=False):
+        img_path = self.path + os.path.sep + pic_name
+        if not os.path.exists(img_path):
+            raise f"图片路径不存在{img_path}"
+        img2 = self.imread(img_path)
         # 判断是RGB偏色还是HSV偏色,对应使用遮罩过滤
-        if not ps:
-            return img
 
-        elif type(ps) == str:
-            lower, upper = self.__color_to_range(ps, 1)
-            img = self.__inRange(img, lower, upper)
+        img1 = self.ps_to_img(img1, delta_color)
+        img2 = self.ps_to_img(img2, delta_color)
+        if gray:
+            img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)  # 转灰度单通道
+            img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)  # 转灰度单通道
+            ret, img1 = cv2.threshold(img1, 0, 254, 0)  # 二值化
+            ret, img2 = cv2.threshold(img2, 0, 254, 0)  # 二值化
+        result = cv2.matchTemplate(img1, img2, method)
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+        yloc, xloc = np.where(result >= sim)
+        height, width = img2.shape[:2]
+        # # --debug
+        # # if pic_name in ["orK.bmp","obK.bmp","omK.bmp","ofK.bmp"]:
+        # if "9" in pic_name:
+        #     self.imshow(img1)
+        #     self.imshow(img2)
+        #     print(max_val)
+        # # --debug
+        return result, min_val, max_val, min_loc, max_loc, yloc, xloc, height, width
 
-        elif type(ps) == tuple:
-            lower, upper = ps
-            img_hsv1 = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-            img = self.__inRange(img_hsv1, lower, upper)
-        return img
-
-
-    def __FindPic(self, x1, y1, x2, y2, pic_name, delta_color, sim, method, drag=None):
+    def _findPic(self, x1, y1, x2, y2, pic_name, delta_color, sim, method, drag=None):
         # 读取图片
         ret = self.Capture(x1, y1, x2, y2)
         if ret:
             img1 = self.GetCVImg()
         else:
             raise "截圖失敗"
-        img2 = self.__imread(self.path + os.path.sep + pic_name)
-
-        # 判断是RGB偏色还是HSV偏色,对应使用遮罩过滤
-        img1 = self.__ps_to_img(img1, delta_color)
-        img2 = self.__ps_to_img(img2, delta_color)
-        # 利用cv的模板匹配找图
-        result = cv2.matchTemplate(img1, img2, method)
-        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-        yloc, xloc = np.where(result >= sim)
-        height, width = img2.shape[:2]
-        return result, min_val, max_val, min_loc, max_loc, yloc, xloc, height, width
+        return self._find_pic(img1, pic_name, delta_color, sim, method)
 
     # 单点比色
-    def CmpColor(self, x, y, color, sim=1):
+    def cmpColor(self, x, y, color, sim=1):
         """
         :param x: 坐标x
         :param y: 坐标y
@@ -112,9 +73,9 @@ class PicColor:
             img = self.GetCVImg()
         else:
             raise "截圖失敗"
-        lower, upper = self.__color_to_range(color, sim)
+        lower, upper = color_to_range(color, sim)
         if not lower is None:
-            new_color = img[y,x]
+            new_color = img[y, x]
             for i in [0, 1, 2]:
                 if new_color[i] < lower[i] or new_color[i] > upper[i]:
                     return False
@@ -122,13 +83,13 @@ class PicColor:
         return False
 
     # 范围找色
-    def FindColor(self, x1, y1, x2, y2, color, sim, dir=None):
+    def findColor(self, x1, y1, x2, y2, color, sim, dir=None):
         ret = self.Capture(x1, y1, x2, y2)
         if ret:
             img = self.GetCVImg()
         else:
             raise "截圖失敗"
-        lower, upper = self.__color_to_range(color, sim)
+        lower, upper = color_to_range(color, sim)
         height, width = img.shape[:2]
         b, g, r = cv2.split(img)
         b = b.reshape(1, height * width)
@@ -149,7 +110,7 @@ class PicColor:
         return -1, -1, -1
 
     # 找图
-    def FindPic(self, x1, y1, x2, y2, pic_name, delta_color, sim, method=5, drag=None):
+    def findPic(self, x1, y1, x2, y2, pic_name, delta_color, sim, method=5, drag=None):
         """
         :param x1:区域的左上X坐标
         :param y1:区域的左上Y坐标
@@ -169,44 +130,62 @@ class PicColor:
                归一化的相关系数匹配方法：完全匹配会得到1，完全负相关匹配会得到-1，完全不匹配会得到0。
         :return:
         """
-        result, min_val, max_val, min_loc, max_loc, yloc, xloc, height, width = self.__FindPic(x1, y1, x2, y2, pic_name,
-                                                                                               delta_color, sim,
-                                                                                               method=5, drag=None)
+        result, min_val, max_val, min_loc, max_loc, yloc, xloc, height, width = self._findPic(x1, y1, x2, y2, pic_name,
+                                                                                              delta_color, sim,
+                                                                                              method=5, drag=None)
         if len(xloc):
             x, y = max_loc[0] + x1, max_loc[1] + y1
             if drag:
                 img = cv2.rectangle(self.GetCVImg(), (x, y), (x + width, y + height), (255, 0, 0), thickness=2)
-                self.__imgshow(img)
+                imgshow(img)
             return 0, x, y
-        return -1, -1, -1
+        # return -1, -1, -1
 
     # 找图，返回多个匹配地址
-    def FindPics(self, x1, y1, x2, y2, pic_name, delta_color, sim, method=5, drag=None):
-        result, min_val, max_val, min_loc, max_loc, yloc, xloc, height, width = self.__FindPic(x1, y1, x2, y2, pic_name,
-                                                                                               delta_color, sim,
-                                                                                               method=5, drag=None)
+    def findPics(self, x1, y1, x2, y2, pic_name, delta_color, sim, method=5, drag=None):
+        result, min_val, max_val, min_loc, max_loc, yloc, xloc, height, width = self._findPic(x1, y1, x2, y2, pic_name,
+                                                                                              delta_color, sim,
+                                                                                              method=method, drag=None)
         if len(xloc):
             if drag:
                 for loc in zip(xloc, yloc):
-                    img = cv2.rectangle(self.GetCVImg(), (loc[0], loc[1]), (loc[0] + width, loc[1] + height), (255, 0, 0),
+                    img = cv2.rectangle(self.GetCVImg(), (loc[0], loc[1]), (loc[0] + width, loc[1] + height),
+                                        (255, 0, 0),
                                         thickness=2)
-                    self.__imgshow(img)
-            return 0, zip(xloc, yloc)
-        return -1, [-1, -1]
+                    imgshow(img)
+            return zip(xloc, yloc)
+        # return -1, [-1, -1]
 
+    @staticmethod
+    def imread(path):
+        # 读取图片
+        if PicColor.is_chinese(path):
+            img = cv2.imdecode(np.fromfile(path, dtype=np.uint8), -1)  # 避免路径有中文
+        else:
+            img = cv2.imread(path)
+        return img
 
-    # 截图
-    def Capture(self, x1, y1, x2, y2, file=None):
+    # 显示图像
+    @staticmethod
+    def imshow(img=None):
         """
-        :param x1: x1 整形数:区域的左上X坐标
-        :param y1: y1 整形数:区域的左上Y坐标
-        :param x2: x2 整形数:区域的右下X坐标
-        :param y2: y2 整形数:区域的右下Y坐标
-        :param file: 保存文件路径，不填写也可以通过
-        :return:
+        :param img:  cv格式图像
+        :return: None
         """
-        pass
+        if img is None:
+            raise "图像为空"
+        cv2.imshow("img", img)
+        cv2.waitKey(0)
 
-    # 获取cv图像
-    def GetCVImg(self):
-        pass
+    # 判断字符串是否为中文
+    @staticmethod
+    def is_chinese(string):
+        """
+        检查整个字符串是否包含中文
+        :param string: 需要检查的字符串
+        :return: bool
+        """
+        for ch in string:
+            if u'\u4e00' <= ch <= u'\u9fff':
+                return True
+        return False

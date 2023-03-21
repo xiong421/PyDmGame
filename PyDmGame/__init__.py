@@ -7,5 +7,5 @@
 @Email:3475228828@qq.com
 @func:功能
 """
-from PyDmGame.dm import DM
+from PyDmGame.dm import createDm,createLdDm,createGdiDm,createNomalDm
 

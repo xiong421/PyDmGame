@@ -7,22 +7,21 @@
 @Email:3475228828@qq.com
 @func:功能
 """
-import time
+
 
 import win32con
 import win32gui
 import win32ui
 import cv2, numpy as np
 
+from PyDmGame.modular.publicFunction import cutOut
+
+
 class Display_normal:
 
-    def __init__(self,hwnd):
-        self.hwnd = hwnd
-        self.img = None
-        
     # 后台截图
     @staticmethod
-    def __windows_capture(hwnd):
+    def _windows_capture(hwnd):
         # pip install pywin32 -i https://pypi.douban.com/simple
         # 获取窗口宽，高
         x, y, x2, y2 = win32gui.GetWindowRect(hwnd)
@@ -48,23 +47,17 @@ class Display_normal:
         win32gui.ReleaseDC(hwnd, hWndDC)
         return img
 
-    # 截取图像范围
-    def __cutOut(self, x1, y1, x2, y2):
-        if sum([x1, y1, x2, y2]) == 0:
-            return self.img
-        height, width = self.img.shape[:2]
-        if y1 <= y2 <= height and x1 <= x2 <= width:
-            return self.img[y1:y2, x1:x2]
-        else:
-            raise "x1,y1,x2,y2图像范围溢出"
-        
     # 前台截图
-    def normal_capture(self):
+    def _normal_capture(self):
         if win32gui.GetWindowPlacement(self.hwnd)[1] != win32con.SW_SHOWNORMAL:
             win32gui.SendMessage(self.hwnd, win32con.WM_SYSCOMMAND, win32con.SC_RESTORE, 0)
         topHwnd = win32gui.GetForegroundWindow()
         if topHwnd != self.hwnd:
-            win32gui.SetForegroundWindow(self.hwnd)
+            try:
+                win32gui.SetForegroundWindow(self.hwnd)
+            except Exception as e:
+                print(f"SetForegroundWindow error:{e}")
+                raise "无法置顶窗口" # 有时候无法置顶窗口
 
         # # 是否激活窗口,避免遮挡
         # if win32gui.GetWindowPlacement(self.hwnd)[1] != win32con.SW_SHOWNORMAL:
@@ -77,29 +70,32 @@ class Display_normal:
         #     time.sleep(0.3)
         # 截图
         desk_hwnd = win32gui.GetDesktopWindow()
-        img = self.__windows_capture(desk_hwnd)
+        img = self._windows_capture(desk_hwnd)
         x1, y1, x2, y2 = win32gui.GetWindowRect(self.hwnd)
         img = img[y1:y2, x1:x2]
         return img
 
     # 截图
-    def Capture(self, x1, y1, x2, y2, file=None):
+    def capture(self, x1=None, y1=None, x2=None, y2=None, file=None):
         """
         :param x1: x1 整形数:区域的左上X坐标
         :param y1: y1 整形数:区域的左上Y坐标
         :param x2: x2 整形数:区域的右下X坐标
         :param y2: y2 整形数:区域的右下Y坐标
-        :param file: 保存文件路径，不填写则写入cv图像到属性self.img
+        :param file: 保存文件路径，不填写则写入cv图像到属性self._img
         :return:
         """
         # 截取并写入
-        self.img = self.normal_capture()
-        self.img = self.__cutOut(x1, y1, x2, y2)
-        if not self.img is None:
+        self._img = self._normal_capture()
+        self._img = cutOut(self._img,x1, y1, x2, y2)
+        if 0 in self._img.shape[:2]:
+            print("截图失败")
+            return 0
+        if not self._img is None:
             if file:
-                cv2.imwrite(file, self.img)
+                cv2.imwrite(file, self._img)
             return 1
         return 0
 
-    def GetCVImg(self):
-        return self.img
+    def getCVImg(self):
+        return self._img

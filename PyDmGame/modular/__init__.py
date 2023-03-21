@@ -7,12 +7,10 @@
 @Email:3475228828@qq.com
 @func:功能
 """
-
-from PyDmGame.modular.keyboard import *
 from PyDmGame.modular.publicFunction import *
+from PyDmGame.modular.display_ import *
+from PyDmGame.modular.km_ import *
 from PyDmGame.modular.picColor import *
-from PyDmGame.modular.ocr import *
-from PyDmGame.modular.backgroundSettings import *
+from PyDmGame.modular.ocr_.ocr_normal import Ocr_normal
 from PyDmGame.modular.basicSettings import *
-from PyDmGame.modular.mouse import *
 from PyDmGame.modular.window import Window
