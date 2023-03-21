@@ -275,7 +275,7 @@ def _to_windows_coordinates(x=0, y=0):
 # relative mouse positions.
 def position(x=None, y=None):
     cursor = POINT()
-    ctypes.windll.user32.GetCursorPos(ctypes.byref(cursor))
+    ctypes.windll.user32.getCursorPos(ctypes.byref(cursor), )
     return (x if x else cursor.x, y if y else cursor.y)
 
 

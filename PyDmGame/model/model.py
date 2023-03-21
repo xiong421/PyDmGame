@@ -6,14 +6,13 @@
 @IDE ：PyCharm
 @Email:3475228828@qq.com
 """
-import threading
 
 thread_max_num = 1000
 class Custom:
     def __init__(self):
         self.display = None
-        self.mouse = None
-        self.keyboard = None
+        self.km = None
+        self.ppocr = None
     def clear(self):
         self.__init__()
 def tdi():
@@ -21,4 +20,5 @@ def tdi():
     for i in range(thread_max_num):
         re.append(Custom())
     return re
-td_info = tdi()
+dmtd_info = tdi()
+dmgl_info = Custom()

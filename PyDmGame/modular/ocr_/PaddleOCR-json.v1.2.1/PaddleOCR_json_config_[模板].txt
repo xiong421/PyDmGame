@@ -1,0 +1,16 @@
+# [填写语言] PP-OCR v[填写版本，2或3]
+
+# det 检测模型库，已支持多语言，一般不用改
+det_model_dir ch_PP-OCRv3_det_infer
+
+# cls 方向分类器库，不用改
+cls_model_dir ch_ppocr_mobile_v2.0_cls_infer
+
+# rec 识别模型库，目标语言的rec库的路径（文件夹名）
+rec_model_dir 填写rec路径
+
+# 字典路径，目标语言的字典txt文件的路径（文件名）
+rec_char_dict_path 填写字典路径
+
+# 若为v2版识别库，需要改为32（将下一行开头的#删掉）
+#rec_img_h 32
