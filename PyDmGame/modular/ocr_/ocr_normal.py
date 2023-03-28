@@ -18,12 +18,15 @@ from PyDmGame.model.model import dmgl_info, dmtd_info
 class Ocr_normal:
     def __init__(self):
         project_path = os.path.join(os.path.dirname(__file__), )
-        path = project_path + os.path.sep + "PaddleOCR-json.v1.2.1\\PaddleOCR_json.exe"
+        paddle_ocr_exe_path = project_path + os.path.sep + "PaddleOCR-json.v1.2.1\\PaddleOCR_json.exe"
+        paddle_ocr_image_temp_path = project_path+os.path.sep + "temp"
         if not dmgl_info.ppocr is None:
             self._ppocr = dmgl_info.ppocr
         else:
-            self._ppocr = PPOCR(path)
+            self._ppocr = PPOCR(paddle_ocr_exe_path)
             dmgl_info.ppocr = self._ppocr
+        if not os.path.exists(paddle_ocr_image_temp_path):
+            os.mkdir(paddle_ocr_image_temp_path)
         self.temp_path = project_path + os.path.sep + f"temp\\{self.id}.bmp"
         self.Lock = threading.Lock()
         self.save_flag = True

@@ -15,48 +15,61 @@ import cv2, numpy as np
 
 class PicColor:
     # 随机创建图片,用于测试算法
-    def _create_random_img(self, width, height, item=3):
+    @staticmethod
+    def _create_random_img(width, height, item=3):
         img = np.random.randint(0, 255, (width, height, item))
         img = img.astype(np.uint8)
         return img
 
-    def ps_to_img(self,img1, delta_color):
+    def ps_to_img(self, img1, delta_color):
         return ps_to_img(img1, delta_color)
 
-    def _find_pic(self, img1, pic_name, delta_color, sim, method,gray=False):
+    def _find_pic(self, img1, pic_name, delta_color, sim, method):
         img_path = self.path + os.path.sep + pic_name
         if not os.path.exists(img_path):
             raise f"图片路径不存在{img_path}"
         img2 = self.imread(img_path)
         # 判断是RGB偏色还是HSV偏色,对应使用遮罩过滤
+        # img1 = self.ps_to_img(img1, delta_color)
+        # img2 = self.ps_to_img(img2, delta_color)
+        # if gray:
+        #     img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)  # 转灰度单通道
+        #     img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)  # 转灰度单通道
+        #     ret, img1 = cv2.threshold(img1, 0, 254, 0)  # 二值化
+        #     ret, img2 = cv2.threshold(img2, 0, 254, 0)  # 二值化
+        # result = cv2.matchTemplate(img1, img2, method)
+        if method <= 5:
+            # 只匹配指定的颜色图像，参数mask表示参与匹配的像素矩阵
+            if delta_color and isinstance(delta_color, str):
+                lower, upper = color_to_range(delta_color, 1.0)
+                lower, upper = lower_upper21(lower, upper)
+                mask = cv2.inRange(img2, tuple(lower), tuple(upper))
+            elif delta_color and (isinstance(delta_color, list) or isinstance(delta_color, tuple)):
+                lower, upper = delta_color
+                # lower, upper = lower_upper21(lower, upper)
+                img2_hsv = cv2.cvtColor(img2, cv2.COLOR_BGR2HSV)
+                mask = cv2.inRange(img2_hsv, tuple(lower), tuple(upper))
+            else:
+                mask = None
+            result = cv2.matchTemplate(img1, img2, method, mask=mask)
 
-        img1 = self.ps_to_img(img1, delta_color)
-        img2 = self.ps_to_img(img2, delta_color)
-        if gray:
-            img1 = cv2.cvtColor(img1, cv2.COLOR_BGR2GRAY)  # 转灰度单通道
-            img2 = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)  # 转灰度单通道
-            ret, img1 = cv2.threshold(img1, 0, 254, 0)  # 二值化
-            ret, img2 = cv2.threshold(img2, 0, 254, 0)  # 二值化
-        result = cv2.matchTemplate(img1, img2, method)
-        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-        yloc, xloc = np.where(result >= sim)
-        height, width = img2.shape[:2]
-        # # --debug
-        # # if pic_name in ["orK.bmp","obK.bmp","omK.bmp","ofK.bmp"]:
-        # if "9" in pic_name:
-        #     self.imshow(img1)
-        #     self.imshow(img2)
-        #     print(max_val)
-        # # --debug
-        return result, min_val, max_val, min_loc, max_loc, yloc, xloc, height, width
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+            yloc, xloc = np.where(result >= sim)
+            height, width = img2.shape[:2]
+            return result, min_val, max_val, min_loc, max_loc, yloc, xloc, height, width
+        elif method == 6:
+            return self._find_pic_BRISK(img1, img2, delta_color, sim)
 
-    def _findPic(self, x1, y1, x2, y2, pic_name, delta_color, sim, method, drag=None):
+    def _findPic(self, x1, y1, x2, y2, pic_name, delta_color, sim, method, capture=True):
         # 读取图片
-        ret = self.Capture(x1, y1, x2, y2)
-        if ret:
-            img1 = self.GetCVImg()
+        if capture:
+            ret = self.capture(x1, y1, x2, y2)
+            if ret:
+                img1 = self.getCVImg()
+            else:
+                raise "截圖失敗"
         else:
-            raise "截圖失敗"
+            img1 = self.getCVImg()
         return self._find_pic(img1, pic_name, delta_color, sim, method)
 
     # 单点比色
@@ -68,9 +81,9 @@ class PicColor:
         :param sim:相似度(0.1-1.0) (0,255)
         :return:bool
         """
-        ret = self.Capture(0, 0, 0, 0)
+        ret = self.capture(0, 0, 0, 0)
         if ret:
-            img = self.GetCVImg()
+            img = self.getCVImg()
         else:
             raise "截圖失敗"
         lower, upper = color_to_range(color, sim)
@@ -83,35 +96,73 @@ class PicColor:
         return False
 
     # 范围找色
-    def findColor(self, x1, y1, x2, y2, color, sim, dir=None):
-        ret = self.Capture(x1, y1, x2, y2)
+    def findColor(self, x1, y1, x2, y2, color, sim):
+        ret = self.capture(x1, y1, x2, y2)
         if ret:
-            img = self.GetCVImg()
+            img = self.getCVImg()
         else:
             raise "截圖失敗"
         lower, upper = color_to_range(color, sim)
-        height, width = img.shape[:2]
-        b, g, r = cv2.split(img)
-        b = b.reshape(1, height * width)
-        g = g.reshape(1, height * width)
-        r = r.reshape(1, height * width)
-        key1 = np.where(lower[0] <= b)
-        key2 = np.where(lower[1] <= g)
-        key3 = np.where(lower[2] <= r)
-        key4 = np.where(upper[0] >= b)
-        key5 = np.where(upper[1] >= g)
-        key6 = np.where(upper[2] >= r)
+        img_array = np.array(img)
+        mask1 = np.all(img_array >= lower, axis=-1)
+        mask2 = np.all(img_array <= upper, axis=-1)
+        mask = np.logical_and(mask1, mask2)
+        pos = np.argwhere(mask)
+        if len(pos):
+            return pos[0]
 
-        if len(key1[0]) and len(key2[0]) and len(key3[0]) and len(key4[0]) and len(key5[0]) and len(key6[0]):
-            keys = reduce(np.intersect1d, [key1, key2, key3, key4, key5, key6])  # 相似度越小,交集数据越多,找的慢,相似度越大,找的越快,主要耗时的地方
-            if len(keys):
-                x, y = divmod(keys[1], width)
-                return 0, x + x1, y + y1
-        return -1, -1, -1
+    # BRISK 特征检测器
+    def _find_pic_BRISK(self, img1, img2, delta_color, sim, drag=False):
+        # 判断是RGB偏色还是HSV偏色,对应使用遮罩过滤
+        img1 = self.ps_to_img(img1, delta_color)
+        img2 = self.ps_to_img(img2, delta_color)
+        # 初始化BRISK特征检测器
+        brisk = cv2.BRISK_create()
+        # 在a和b中检测关键点和描述符
+        kp1, des1 = brisk.detectAndCompute(img1, None)
+        kp2, des2 = brisk.detectAndCompute(img2, None)
+        des1 = des1.astype('float32')
+        des2 = des2.astype('float32')
+        # 创建FLANN匹配器
+        flann = cv2.FlannBasedMatcher()
+
+        # 使用FLANN匹配器进行匹配
+        matches = flann.knnMatch(des1, des2, k=2)
+
+        # 定义比较函数
+        def compare_ratio(match):
+            # 返回第一个特征描述符距离与第二个特征描述符距离的比率
+            return match[0].distance / match[1].distance
+
+        # 进行排序
+        matches = sorted(matches, key=compare_ratio)
+        # 使用SANSAC过滤器进行匹配点过滤
+        good_matches = []
+        for m, n in matches:
+            if m.distance < 0.7 * n.distance:
+                good_matches.append(m)
+
+        img_matches = cv2.drawMatches(img1, kp1, img2, kp2, good_matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+        if drag:
+            imgshow(img_matches)
+        if good_matches:
+            return good_matches, kp1, img_matches
+
+    def findTzPic(self, x1=0, y1=0, x2=None, y2=None, pic_name="", delta_color="", drag=None, capture=True):
+        resoult = self._findPic(x1, y1, x2, y2, pic_name, delta_color, None, 6, capture)
+        if resoult:
+            good_matches, kp1, img = resoult
+            m = good_matches[0]
+            if drag:
+                imgshow(img)
+            # 浮点数转整数
+            pts1 = np.array(kp1[m.queryIdx].pt, dtype=np.float32).astype(np.int32)
+            return list(pts1)
 
     # 找图
-    def findPic(self, x1, y1, x2, y2, pic_name, delta_color, sim, method=5, drag=None):
+    def findPic(self, x1=0, y1=0, x2=None, y2=None, pic_name="", delta_color="", sim=0.9, method=5, drag=None, capture=True, center=None):
         """
+        :param center:
         :param x1:区域的左上X坐标
         :param y1:区域的左上Y坐标
         :param x2:区域的右下X坐标
@@ -119,7 +170,7 @@ class PicColor:
         :param pic_name:图片名，只能单个图片
         :param delta_color:偏色,可以是RGB偏色,格式"FFFFFF-202020",也可以是HSV偏色，格式((0,0,0),(180,255,255))
         :param sim:相似度，和算法相关
-        :param dir:仿大漠，总共有6总
+        :param method:仿大漠，总共有6总，范围0-5,对应cv的算法
         :param drag:是否在找到的位置画图并显示,默认不画
                方差匹配方法：匹配度越高，值越接近于0。
                归一化方差匹配方法：完全匹配结果为0。
@@ -128,32 +179,38 @@ class PicColor:
                相关系数匹配方法：完全匹配会得到一个很大值，完全不匹配会得到0，完全负相关会得到很大的负数。
                     （此处与书籍以及大部分分享的资料所认为不同，研究公式发现，只有归一化的相关系数才会有[-1,1]的值域）
                归一化的相关系数匹配方法：完全匹配会得到1，完全负相关匹配会得到-1，完全不匹配会得到0。
+        :param capture:是否截图，或者使用之前的图片
+        :param center:算法
+
         :return:
         """
-        result, min_val, max_val, min_loc, max_loc, yloc, xloc, height, width = self._findPic(x1, y1, x2, y2, pic_name,
-                                                                                              delta_color, sim,
-                                                                                              method=5, drag=None)
+        resoult = self._findPic(x1, y1, x2, y2, pic_name, delta_color, sim, method, capture)
+        result, min_val, max_val, min_loc, max_loc, yloc, xloc, height, width = resoult
+        # 画图
         if len(xloc):
             x, y = max_loc[0] + x1, max_loc[1] + y1
             if drag:
-                img = cv2.rectangle(self.GetCVImg(), (x, y), (x + width, y + height), (255, 0, 0), thickness=2)
+                img = cv2.rectangle(self.getCVImg(), (x, y), (x + width, y + height), (255, 0, 0), thickness=2)
                 imgshow(img)
-            return 0, x, y
-        # return -1, -1, -1
+            if center:
+                return x + width / 2, y + height / 2
+            return x, y
 
     # 找图，返回多个匹配地址
-    def findPics(self, x1, y1, x2, y2, pic_name, delta_color, sim, method=5, drag=None):
+    def findPics(self, x1, y1, x2, y2, pic_name, delta_color, sim, method=5, drag=None, capture=True):
+        locs = []
         result, min_val, max_val, min_loc, max_loc, yloc, xloc, height, width = self._findPic(x1, y1, x2, y2, pic_name,
                                                                                               delta_color, sim,
-                                                                                              method=method, drag=None)
+                                                                                              method, capture)
         if len(xloc):
             if drag:
                 for loc in zip(xloc, yloc):
-                    img = cv2.rectangle(self.GetCVImg(), (loc[0], loc[1]), (loc[0] + width, loc[1] + height),
+                    img = cv2.rectangle(self.getCVImg(), (loc[0], loc[1]), (loc[0] + width, loc[1] + height),
                                         (255, 0, 0),
                                         thickness=2)
                     imgshow(img)
-            return zip(xloc, yloc)
+            locs = list(zip(xloc, yloc))
+        return locs
         # return -1, [-1, -1]
 
     @staticmethod
@@ -189,3 +246,11 @@ class PicColor:
             if u'\u4e00' <= ch <= u'\u9fff':
                 return True
         return False
+
+    def resize(self, fx=1, fy=1):
+        """
+        :param fx: x轴缩放倍数
+        :param fy: y轴缩放倍数
+        :return: img
+        """
+        return cv2.resize(self.getCVImg(), None, fx=fx, fy=fy)

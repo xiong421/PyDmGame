@@ -15,20 +15,21 @@ from PyDmGame.model.model import dmtd_info, thread_max_num
 class ABC:
     pass
 
+
 def createDm(hwnd="deskTop", display="normal", km="normal", ocr="ppcor"):
     if hwnd == "deskTop":
         hwnd = Window.getSpecialWindow(0)
 
-    if display ==  "normal":
+    if display == "normal":
         displayClass = Display_normal
-    elif display ==  "gdi":
+    elif display == "gdi":
         displayClass = Display_gdi
     elif display == "ld":
         displayClass = Display_ld
     else:
         raise "display Wrong binding mode"
 
-    if km ==  "normal":
+    if km == "normal":
         KMClass = KM_normal
     elif km == "normal2":
         KMClass = KM_normal2
@@ -48,15 +49,14 @@ def createDm(hwnd="deskTop", display="normal", km="normal", ocr="ppcor"):
     else:
         OCRClass = ABC
 
-    class DM(displayClass, KMClass, OCRClass, PicColor,BasicSettings):
+    class DM(BasicSettings, displayClass, KMClass, OCRClass, PicColor):
         count = 0
 
         def __init__(self):
             self.__init_count()
             self.hwnd = hwnd
             self._img = None
-            super(KMClass, self).__init__()
-            super(OCRClass, self).__init__()
+            super(DM, self).__init__()
 
         def __del__(self):
             dmtd_info[self.id].clear()
@@ -69,20 +69,21 @@ def createDm(hwnd="deskTop", display="normal", km="normal", ocr="ppcor"):
                 raise f"线程不能超过{thread_max_num}个"
 
     return DM()
+
 
 def createNomalDm(hwnd):
     displayClass = Display_normal
     KMClass = KM_normal
     OCRClass = Ocr_normal
-    class DM(displayClass, KMClass, OCRClass, PicColor,BasicSettings):
+
+    class DM(BasicSettings, displayClass, KMClass, OCRClass, PicColor):
         count = 0
 
         def __init__(self):
             self.__init_count()
             self.hwnd = hwnd
             self._img = None
-            super(KMClass, self).__init__()
-            super(OCRClass, self).__init__()
+            super(DM, self).__init__()
 
         def __del__(self):
             dmtd_info[self.id].clear()
@@ -95,20 +96,21 @@ def createNomalDm(hwnd):
                 raise f"线程不能超过{thread_max_num}个"
 
     return DM()
+
 
 def createGdiDm(hwnd):
     displayClass = Display_gdi
     KMClass = KM_windows
     OCRClass = Ocr_normal
-    class DM(displayClass, KMClass, OCRClass, PicColor,BasicSettings):
+
+    class DM(BasicSettings, displayClass, KMClass, OCRClass, PicColor):
         count = 0
 
         def __init__(self):
             self.__init_count()
             self.hwnd = hwnd
             self._img = None
-            super(KMClass, self).__init__()
-            super(OCRClass, self).__init__()
+            super(DM, self).__init__()
 
         def __del__(self):
             dmtd_info[self.id].clear()
@@ -122,18 +124,19 @@ def createGdiDm(hwnd):
 
     return DM()
 
+
 def createLdDm():
     displayClass = Display_ld
     KMClass = KM_ld
     OCRClass = Ocr_normal
-    class DM(displayClass, KMClass, Ocr_normal, PicColor,BasicSettings):
+
+    class DM(BasicSettings, displayClass, KMClass, Ocr_normal, PicColor):
         count = 0
 
         def __init__(self):
             self.__init_count()
             self._img = None
-            super(KMClass, self).__init__()
-            super(OCRClass, self).__init__()
+            super(DM, self).__init__()
 
         def __del__(self):
             dmtd_info[self.id].clear()

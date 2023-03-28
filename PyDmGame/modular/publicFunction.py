@@ -9,9 +9,8 @@
 """
 import time
 
-
 # 测试耗时
-import cv2,numpy as np
+import cv2, numpy as np
 import win32clipboard
 
 
@@ -26,9 +25,10 @@ def test_run_time(func):
     return inner
 
 
-def raise_dm_error(name,description):
+def raise_dm_error(name, description):
     error = f"报错类型:{name},报错描述:{description}"
     raise error
+
 
 def ps_to_img(img, ps):
     """
@@ -51,6 +51,7 @@ def ps_to_img(img, ps):
         img = cv2.cvtColor(img, cv2.COLOR_HSV2BGR)
     return img
 
+
 # 转换大漠格式RGB "ffffff-303030" 为 BGR遮罩范围(100,100,100),(255,255,255)
 def color_to_range(color, sim):
     if sim <= 1:
@@ -70,10 +71,12 @@ def color_to_range(color, sim):
     upper = tuple(map(lambda c, w: min(c + w + sim, 255), color, weight))
     return lower, upper
 
+
 def inRange(img, lower, upper):
     mask = cv2.inRange(img, np.array(lower), np.array(upper))
     img = cv2.bitwise_and(img, img, mask=mask)
     return img
+
 
 def send_msg_to_clip(type_data, msg):
     """
@@ -92,9 +95,10 @@ def send_msg_to_clip(type_data, msg):
     win32clipboard.SetClipboardData(type_data, msg)
     win32clipboard.CloseClipboard()
 
+
 # 截取图像范围
 def cutOut(img, x1, y1, x2, y2):
-    if None in [x1,y1,x2,y2] or sum([x1,y1,x2,y2])==0:
+    if None in [x1, y1, x2, y2] or sum([x1, y1, x2, y2]) == 0:
         return img
     height, width = img.shape[:2]
     if y1 <= y2 <= height and x1 <= x2 <= width:
@@ -102,8 +106,27 @@ def cutOut(img, x1, y1, x2, y2):
     else:
         raise "x1,y1,x2,y2图像范围溢出"
 
+
 def imgshow(img):
     windows_name = "img"
     cv2.imshow(windows_name, img)
     cv2.waitKey()
-    cv2.destroyWindow(windows_name)
+    # cv2.destroyWindow(windows_name)
+
+
+def lower_upper21(lower, upper):
+    """
+    颜色的上限和下限，-1或者+1，避免相等
+    :param lower:
+    :param upper:
+    :return:
+    """
+    new_lower, new_upper = [], []
+    for down, up in zip(lower, upper):
+        if down == up > 0:
+            down -= 1
+        elif down == up == 0:
+            up += 1
+        new_lower.append(down)
+        new_upper.append(up)
+    return new_lower, new_upper

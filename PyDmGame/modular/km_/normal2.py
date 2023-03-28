@@ -115,5 +115,31 @@ class KM_normal2:
     def wheelUp():
         win32api.mouse_event(win32con.MOUSEEVENTF_WHEEL, 120, 0)
 
+    def hotKey(self, key_list, interval=None):
+        if not interval:
+            interval = self.mouse_delay
+        for key in key_list:
+            self.keyDownChar(key)
+            time.sleep(interval)
+        for key in key_list[::-1]:
+            self.keyUpChar(key)
+            time.sleep(interval)
+
+    def keyPressStr(self, key_list, interval=None):
+        """
+        支持两种格式，一种是"a,b,c",一种是["a","b","c"],或("a","b","c")等可迭代对象
+        :param key_list:
+        :return:
+        """
+        if not interval:
+            interval = self.keyboard_delay
+        if isinstance(key_list, str):
+            for key in key_list.split(","):
+                self.keyPressChar(key)
+                time.sleep(interval)
+        else:
+            for key in key_list:
+                self.keyPressChar(key)
+                time.sleep(interval)
     # def EnableRealMouse(self,enable,mousedelay,mousestep):
     #     pass

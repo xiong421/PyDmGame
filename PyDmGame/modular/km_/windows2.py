@@ -12,6 +12,8 @@ import time
 import win32api
 import win32con
 
+from PyDmGame.modular.vk_code import vk_to_char
+
 
 class KM_windows2:
     def __init__(self):
@@ -25,10 +27,10 @@ class KM_windows2:
         self.keyboard_delay = 0.01 if delay is None else delay / 1000
 
     def keyDownChar(self, key_str):
-        win32api.PostMessage(self.hwnd, win32con.WM_KEYDOWN, self.GetVK_CODE(key_str), 0)
+        win32api.PostMessage(self.hwnd, win32con.WM_KEYDOWN, vk_to_char(key_str), 0)
 
     def keyUpChar(self, key_str):
-        win32api.PostMessage(self.hwnd, win32con.WM_KEYUP, self.GetVK_CODE(key_str), 0xC01E0001)
+        win32api.PostMessage(self.hwnd, win32con.WM_KEYUP, vk_to_char(key_str), 0xC01E0001)
 
     def keyPressChar(self, key_str: str):
         self.keyDownChar(key_str)
@@ -99,6 +101,33 @@ class KM_windows2:
     def wheelUp(self):
         win32api.PostMessage(self.hwnd, win32con.WM_MOUSEWHEEL, win32con.WHEEL_DELTA * 1,
                              win32api.MAKELONG(self.x, self.y))
+
+    def hotKey(self, key_list, interval=None):
+        if not interval:
+            interval = self.mouse_delay
+        for key in key_list:
+            self.keyDownChar(key)
+            time.sleep(interval)
+        for key in key_list[::-1]:
+            self.keyUpChar(key)
+            time.sleep(interval)
+
+    # def keyPressStr(self, key_list, interval=None):
+    #     """
+    #     支持两种格式，一种是"a,b,c",一种是["a","b","c"],或("a","b","c")等可迭代对象
+    #     :param key_list:
+    #     :return:
+    #     """
+    #     if not interval:
+    #         interval = self.mouse_delay
+    #     if isinstance(key_list, str):
+    #         for key in key_list.split(","):
+    #             self.keyPressChar(key)
+    #             time.sleep(interval)
+    #     else:
+    #         for key in key_list:
+    #             self.keyPressChar(key)
+    #             time.sleep(interval)
 
     # def enableRealMouse(self, enable, mousedelay, mousestep):
     #     pass

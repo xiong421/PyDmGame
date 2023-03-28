@@ -18,28 +18,30 @@ from PyDmGame.modular import pydirectinput
 class KM_normal:
     winKernel32 = ctypes.windll.kernel32
     winuser32 = ctypes.windll.LoadLibrary('user32.dll')
+
     def __init__(self):
         self.setKeypadDelay()
         self.setMouseDelay()
-        self.x,self.y =  win32gui.GetClientRect(self.hwnd)[:2]
+        self.x, self.y = win32gui.GetClientRect(self.hwnd)[:2]
+
     # 键盘==============================
     def setKeypadDelay(self, delay=None):
         self.keyboard_delay = 0.03 if delay is None else delay / 1000
 
     @staticmethod
     def keyDownChar(key_str):
-        pydirectinput.keyDown(key_str,_pause=False)
+        pydirectinput.keyDown(key_str, _pause=False)
 
     @staticmethod
     def keyUpChar(key_str):
-        pydirectinput.keyUp(key_str,_pause=False)
+        pydirectinput.keyUp(key_str, _pause=False)
 
-    def keyPressChar(self, key_str:str):
+    def keyPressChar(self, key_str: str):
         self.keyDownChar(key_str)
         time.sleep(self.keyboard_delay)
         self.keyUpChar(key_str)
 
-    def enableRealKeypad(self,enable):
+    def enableRealKeypad(self, enable):
         pass
 
     # 鼠标==============================
@@ -63,7 +65,7 @@ class KM_normal:
 
     @staticmethod
     def rightDown():
-        pydirectinput.mouseDown(button="right",_pause=False)
+        pydirectinput.mouseDown(button="right", _pause=False)
 
     @staticmethod
     def rightUp():
@@ -74,8 +76,8 @@ class KM_normal:
         time.sleep(self.mouse_delay)
         self.rightUp()
 
-    def setMouseDelay(self,delay=None):
-        self.mouse_delay = 0.03 if delay is None else delay/1000
+    def setMouseDelay(self, delay=None):
+        self.mouse_delay = 0.03 if delay is None else delay / 1000
 
     def middleClick(self):
         self.middleDown()
@@ -88,18 +90,45 @@ class KM_normal:
 
     @staticmethod
     def middleUp():
-        pydirectinput.mouseUp(button="middle",_pause=False)
+        pydirectinput.mouseUp(button="middle", _pause=False)
 
-    def moveTo(self,x,y):
-        pydirectinput.moveTo(self.x + x,self.y+y)
+    def moveTo(self, x, y):
+        pydirectinput.moveTo(self.x + x, self.y + y)
 
     @staticmethod
     def wheelDown():
-        pydirectinput.mouseDown(button="wheel",_pause=False)
+        pydirectinput.mouseDown(button="wheel", _pause=False)
 
     @staticmethod
     def wheelUp():
-        pydirectinput.mouseUp(button="wheel",_pause=False)
+        pydirectinput.mouseUp(button="wheel", _pause=False)
+
+    def hotKey(self, key_list, interval=None):
+        if not interval:
+            interval = self.keyboard_delay
+        for key in key_list:
+            self.keyDownChar(key)
+            time.sleep(interval)
+        for key in key_list[::-1]:
+            self.keyUpChar(key)
+            time.sleep(interval)
+
+    def keyPressStr(self, key_list, interval=None):
+        """
+        支持两种格式，一种是"a,b,c",一种是["a","b","c"],或("a","b","c")等可迭代对象
+        :param key_list:
+        :return:
+        """
+        if not interval:
+            interval = self.keyboard_delay
+        if isinstance(key_list, str):
+            for key in key_list.split(","):
+                self.keyPressChar(key)
+                time.sleep(interval)
+        else:
+            for key in key_list:
+                self.keyPressChar(key)
+                time.sleep(interval)
 
     # def enableRealMouse(self,enable,mousedelay,mousestep):
     #     pass

@@ -7,6 +7,7 @@
 @Email:3475228828@qq.com
 @func:功能
 """
+import json
 import os
 import random
 import time
@@ -23,15 +24,13 @@ class Dnconsole:
         self._setting_path = console_path + "\\vms\\config"
         self._max_list = None  # 存储所有模拟器列表信息
 
+
+
     # 设置雷电序号
     def set_ldNum(self, ldNum):
         self._index = ldNum
-
-    def set_ld_temp_image(self, ld_temp_image=None):
-        if ld_temp_image is None:
-            ld_temp_image = os.getenv('TEMP')
-        self.ld_temp_image = ld_temp_image
-        self.set_sharedPictures(self.ld_temp_image)
+        self.ld_temp_image = self.get_config('statusSettings.sharedPictures')
+        # self.set_sharedPictures(self.ld_temp_image)
 
     def get_ldNum(self):
         return self._index
@@ -65,8 +64,6 @@ class Dnconsole:
         else:
             self._max_list = len(info)
 
-        # if len(info) > 1:
-        #     info = info[1:]  # 去重序号0
         for line in info:
             if len(line) > 1:
                 dnplayer = line.split(',')
@@ -281,41 +278,51 @@ class Dnconsole:
         process.close()
         return result
 
-    # 修改默认图片保存路径
-    def set_sharedPictures(self, path):
-        set_name = 'statusSettings.sharedPictures'
-        new_config = ""  # 写入的文件
-        path = path.replace('\\', "/")
+    # 获取图片保存路径
+    def get_config(self,key_name=None):
         index_setting_path = self._setting_path + "\\leidian%s.config" % self._index
         with open(index_setting_path, "r+", encoding="utf-8") as fp:
             text = fp.read()
-            if set_name in text:
-                # 路径已存在，不重复写入
-                if path in text:
-                    return
-                # 参数存在,但是路径不对,替换路径
-                else:
-                    fp.seek(0)
-                    all_line = fp.readlines()
-                    for line in all_line:
-                        if set_name in line:
-                            line = f'\t"{set_name}": "{path}",\n'
-                        new_config += line
-            # 参数不存在时,使用模板替换文件，并随机在写入部分参数，分辨率默认为960*540*160*240
-            else:
-                with open(path + "\\leidian_template.config", "r", encoding="utf-8") as fp:
-                    new_config = fp.read()
-                    new_config = new_config.replace("save_image_path", path)
-                    new_config = new_config.replace("phoneIMEI_num", str(Dnconsole.myRandom("int", 12)))
-                    new_config = new_config.replace("phoneIMSI_num", str(Dnconsole.myRandom("int", 12)))
-                    new_config = new_config.replace("phoneSimSerial_num", str(Dnconsole.myRandom("int", 20)))
-                    new_config = new_config.replace("phoneAndroidId_num",
-                                                    format(int(Dnconsole.myRandom("hex", 16)), 'x'))
-                    new_config = new_config.replace("macAddress_num", format(int(Dnconsole.myRandom("hex", 12)), 'x'))
-
-            # 有更改时,重新写入数据
-            with open(index_setting_path, "w", encoding="utf-8") as fp:
-                fp.write(new_config)
+            if key_name is None:
+                return text
+            elif key_name in text:
+                text = json.loads(text)
+                return text[key_name]
+    # 修改默认图片保存路径
+    # def set_sharedPictures(self, path):
+    #     set_name = 'statusSettings.sharedPictures'
+    #     new_config = ""  # 写入的文件
+    #     path = path.replace('\\', "/")
+    #     index_setting_path = self._setting_path + "\\leidian%s.config" % self._index
+    #     with open(index_setting_path, "r+", encoding="utf-8") as fp:
+    #         text = fp.read()
+    #         if set_name in text:
+    #             # 路径已存在，不重复写入
+    #             if path in text:
+    #                 return
+    #             # 参数存在,但是路径不对,替换路径
+    #             else:
+    #                 fp.seek(0)
+    #                 all_line = fp.readlines()
+    #                 for line in all_line:
+    #                     if set_name in line:
+    #                         line = f'\t"{set_name}": "{path}",\n'
+    #                     new_config += line
+    #         # 参数不存在时,使用雷电3模板替换文件，并随机在写入部分参数，分辨率默认为960*540*160*240
+    #         else:
+    #             with open(path + "\\leidian_template.config", "r", encoding="utf-8") as fp:
+    #                 new_config = fp.read()
+    #                 new_config = new_config.replace("save_image_path", path)
+    #                 new_config = new_config.replace("phoneIMEI_num", str(Dnconsole.myRandom("int", 12)))
+    #                 new_config = new_config.replace("phoneIMSI_num", str(Dnconsole.myRandom("int", 12)))
+    #                 new_config = new_config.replace("phoneSimSerial_num", str(Dnconsole.myRandom("int", 20)))
+    #                 new_config = new_config.replace("phoneAndroidId_num",
+    #                                                 format(int(Dnconsole.myRandom("hex", 16)), 'x'))
+    #                 new_config = new_config.replace("macAddress_num", format(int(Dnconsole.myRandom("hex", 12)), 'x'))
+    #
+    #         # 有更改时,重新写入数据
+    #         with open(index_setting_path, "w", encoding="utf-8") as fp:
+    #             fp.write(new_config)
 
     # 随机指定类型和长度的整数数字
     @staticmethod
